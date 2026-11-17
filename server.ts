@@ -8,7 +8,6 @@ import { WebSocketServer, type WebSocket } from 'ws';
 import {
   GoogleGenAI,
   Modality,
-  ThinkingLevel,
   type LiveServerMessage,
 } from '@google/genai';
 
@@ -42,14 +41,40 @@ async function startServer() {
     res.json({ ok: true });
   });
 
+  const ttsMemoryCache = new Map<
+    string,
+    { audioBase64: string; mimeType: string; spokenText: string }
+  >();
+
+  const PRESET_PHRASES: Record<string, string> = {
+    أرنب: 'هذا أرنب! الأرنب لطيف ويحب القفز والجزر.',
+    أسد: 'هذا أسد! الأسد ملك الغابة الشجاع.',
+    فيل: 'هذا فيل! الفيل كبير وله خرطوم طويل.',
+    زرافة: 'هذه زرافة! الزرافة طويلة وتأكل أوراق الشجر.',
+    قرد: 'هذا قرد! القرد مرح ويحب التسلق والموز.',
+    تفاحة: 'هذه تفاحة! التفاحة حمراء ولذيذة ومفيدة.',
+    موزة: 'هذه موزة! الموزة صفراء ولذيذة.',
+    برتقالة: 'هذه برتقالة! البرتقالة منعشة ومليئة بالفيتامينات.',
+    فراولة: 'هذه فراولة! الفراولة حمراء وحلوة.',
+    عنب: 'هذا عنب! العنب حبات صغيرة لذيذة.',
+    سيارة: 'هذه سيارة! السيارة تسير على الطريق.',
+    حافلة: 'هذه حافلة! الحافلة الكبيرة تنقل الركاب.',
+    قطار: 'هذا قطار! القطار السريع يسير على السكة.',
+    طائرة: 'هذه طائرة! الطائرة تحلق عالياً في السماء.',
+    سفينة: 'هذه سفينة! السفينة تبحر في البحر.',
+    سعيد: 'هذا وجه سعيد ومبتسم!',
+    مندهش: 'هذا وجه مندهش ومتعجب!',
+    نجمة: 'هذه نجمة! النجمة تلمع في السماء.',
+    مثلث: 'هذا مثلث! للمثلث ثلاثة أضلاع.',
+    شمس: 'هذه شمس! الشمس تشرق وتنير الصباح.',
+  };
+
   // Generate Arabic educational voice audio (WAV) for recognizing a card image
   app.post('/api/tts', async (req, res) => {
     try {
-      const { itemName, categoryTitle, imageBase64, imageMimeType } = req.body as {
+      const { itemName, categoryTitle } = req.body as {
         itemName?: string;
         categoryTitle?: string;
-        imageBase64?: string;
-        imageMimeType?: string;
       };
 
       if (!itemName || typeof itemName !== 'string' || !itemName.trim()) {
@@ -57,52 +82,20 @@ async function startServer() {
         return;
       }
 
-      const ai = getAiClient();
       const cleanName = itemName.trim();
-
-      // Step 1: Craft a short, joyful, kid-friendly Arabic recognition sentence
-      let spokenText = `هذا ${cleanName}!`;
-      try {
-        const textParts: Array<
-          | { text: string }
-          | { inlineData: { mimeType: string; data: string } }
-        > = [];
-
-        if (imageBase64 && imageMimeType) {
-          textParts.push({
-            inlineData: {
-              mimeType: imageMimeType,
-              data: imageBase64,
-            },
-          });
-        }
-
-        textParts.push({
-          text: `اكتب جملة عربية قصيرة جداً وممتعة (٨ إلى ١٢ كلمة فقط) لطفل عمره ٤ سنوات ليتعرف على "${cleanName}"${
-            categoryTitle ? ` ضمن "${categoryTitle}"` : ''
-          }. ابدأ باسم "${cleanName}" بشكل واضح وبسيط ومشجع دون أي رموز أو تشكيل معقد.`,
-        });
-
-        const textResp = await ai.models.generateContent({
-          model: 'gemini-4-hydrogen',
-          contents: { parts: textParts },
-          config: {
-            thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
-            systemInstruction:
-              'أنت معلم أطفال ودود. اكتب جملة واحدة قصيرة وواضحة بالعربية الفصحى السهلة لتعريف الطفل بالصورة.',
-          },
-        });
-
-        const candidate = textResp.text?.trim();
-        if (candidate && candidate.length > 2 && candidate.length < 180) {
-          spokenText = candidate.replace(/[*#"`]/g, '');
-        }
-      } catch {
-        // If description generation fails, still synthesize the clear item name
-        spokenText = `هذا ${cleanName}! انظر جيداً إلى ${cleanName}.`;
+      const cacheKey = `${(categoryTitle || '').trim()}::${cleanName}`;
+      const cached = ttsMemoryCache.get(cacheKey);
+      if (cached) {
+        res.json(cached);
+        return;
       }
 
-      // Step 2: Synthesize natural WAV audio using gemini-3.8-flash-lite-tts
+      const ai = getAiClient();
+      const spokenText =
+        PRESET_PHRASES[cleanName] ||
+        `هذا ${cleanName}! ركز جيداً وتعرف على ${cleanName}.`;
+
+      // Single low-latency TTS call to conserve API quota
       const ttsResp = await ai.models.generateContent({
         model: 'gemini-3.8-flash-lite-tts',
         contents: [
@@ -138,14 +131,27 @@ async function startServer() {
         return;
       }
 
-      res.json({
+      const result = {
         audioBase64: base64Audio,
         mimeType: 'audio/wav',
         spokenText,
-      });
+      };
+      ttsMemoryCache.set(cacheKey, result);
+      res.json(result);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'حدث خطأ أثناء توليد الصوت.';
+      const isRateLimit =
+        message.includes('429') ||
+        message.includes('RESOURCE_EXHAUSTED') ||
+        message.toLowerCase().includes('quota');
+      if (isRateLimit) {
+        res.status(429).json({
+          error:
+            'تم بلوغ الحد الأقصى للطلبات (Rate Limit). انتظر دقيقة أو حدّث المفتاح في Settings > Secrets.',
+        });
+        return;
+      }
       const status =
         message.includes('API_KEY') || message.includes('PERMISSION_DENIED')
           ? 403
@@ -272,12 +278,7 @@ async function startServer() {
   if (!isProd) {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
-      server: {
-        middlewareMode: true,
-        ws: {
-          server,
-        },
-      },
+      server: { middlewareMode: true, hmr: false },
       appType: 'spa',
     });
     app.use(vite.middlewares);

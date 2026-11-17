@@ -201,55 +201,16 @@ function base64ToBlob(base64: string, mimeType: string): Blob {
   return new Blob([byteArray], { type: mimeType });
 }
 
-async function resolveImageToBase64(
-  imageUrl: string | Blob
-): Promise<{ data: string; mimeType: string } | null> {
-  try {
-    let blob: Blob;
-    if (imageUrl instanceof Blob) {
-      blob = imageUrl;
-    } else if (imageUrl.startsWith('data:image/svg')) {
-      // Skip SVG for vision input; item name is sufficient
-      return null;
-    } else {
-      const resp = await fetch(imageUrl);
-      if (!resp.ok) return null;
-      blob = await resp.blob();
-    }
-
-    if (blob.type.includes('svg') || blob.size > 2_500_000) {
-      return null;
-    }
-
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(String(reader.result));
-      reader.onerror = () => reject(reader.error);
-      reader.readAsDataURL(blob);
-    });
-
-    const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
-    if (!match) return null;
-    return { mimeType: match[1], data: match[2] };
-  } catch {
-    return null;
-  }
-}
-
 export async function generateItemRecognitionAudio(
   item: Pick<Item, 'name' | 'imageUrl'>,
   categoryTitle?: string
 ): Promise<{ blob: Blob; spokenText: string }> {
-  const imageData = item.imageUrl ? await resolveImageToBase64(item.imageUrl) : null;
-
   const response = await fetch('/api/tts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       itemName: item.name,
       categoryTitle,
-      imageBase64: imageData?.data,
-      imageMimeType: imageData?.mimeType,
     }),
   });
 
