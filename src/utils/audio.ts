@@ -201,37 +201,153 @@ function base64ToBlob(base64: string, mimeType: string): Blob {
   return new Blob([byteArray], { type: mimeType });
 }
 
+export function getSmartItemDescription(name: string, categoryTitle?: string): string {
+  const clean = name.trim();
+  const lower = clean.toLowerCase();
+
+  // Animals
+  if (lower.includes('أرنب') || lower.includes('ارنب')) {
+    return 'هذا أرنب لطيف وجميل! يحب أكل الجزر ويقفز بسرعة ومرح في الحقول الخضراء!';
+  }
+  if (lower.includes('أسد') || lower.includes('اسد')) {
+    return 'هذا أسد شجاع وقوي! يلقب بملك الغابة وله صوت زئير رائع ومهيب!';
+  }
+  if (lower.includes('فيل')) {
+    return 'هذا فيل ضخم ومحبوب! لديه خرطوم طويل وأذنان كبيرتان وذاكرة قوية وذكية مثلك تماماً!';
+  }
+  if (lower.includes('زرافة') || lower.includes('زرافه')) {
+    return 'هذه زرافة رشيقة ولطيفة! هي أطول حيوان في العالم وتصل لأوراق الأشجار العالية بسهولة!';
+  }
+  if (lower.includes('قرد')) {
+    return 'هذا قرد مرح ونشيط! يحب أكل الموز والقفز بخفة بين أغصان الأشجار!';
+  }
+  if (lower.includes('قط') || lower.includes('هرة') || lower.includes('بسة')) {
+    return 'هذه قطة أليفة وجميلة! تحب اللعب بالكرة وتصدر صوتاً ناعماً: مياو مياو!';
+  }
+  if (lower.includes('كلب')) {
+    return 'هذا كلب وفي وشجاع! يحرس أصدقاءه ويحب الركض واللعب في الحديقة!';
+  }
+  if (lower.includes('عصفور') || lower.includes('طائر') || lower.includes('طير')) {
+    return 'هذا عصفور مغرد رائع! يطير بجناحيه في السماء ويملأ الصباح بأجمل الألحان!';
+  }
+  if (lower.includes('حصان') || lower.includes('خيل')) {
+    return 'هذا حصان أصيل وسريع! يعدو في البراري بكل رشاقة وقوة وجمال!';
+  }
+  if (lower.includes('جمل')) {
+    return 'هذا جمل صبور وقوي! يسمى سفينة الصحراء ويتحمل السفر في الرمال الذهبية!';
+  }
+
+  // Fruits
+  if (lower.includes('تفاح')) {
+    return 'هذه تفاحة حمراء مقرمشة ولذيذة! تمنحك فيتامينات وطاقة قوية لتكون بطلاً ذكياً!';
+  }
+  if (lower.includes('موز')) {
+    return 'هذه موزة صفراء حلوة المذاق! غنية بالطاقة وتساعد عضلاتك وعقلك على النمو والنشاط!';
+  }
+  if (lower.includes('برتقال')) {
+    return 'هذه برتقالة منعشة وعصيرية! غنية بفيتامين سي وتحميك من البرد وتزيد نشاطك وحيويتك!';
+  }
+  if (lower.includes('فراول')) {
+    return 'هذه فراولة حمراء رائعة الجمال! طعمها حلو ولذيذ ومليئة بالفيتامينات المفيدة!';
+  }
+  if (lower.includes('عنب')) {
+    return 'هذا عنب شهي ولذيذ! حباته الصغيرة مليئة بالماء والسكريات الطبيعية المفيدة لجسمك!';
+  }
+  if (lower.includes('بطيخ')) {
+    return 'هذا بطيخ صيفي منعش وحلو ولذيذ! يروي عطشنا في الأيام المشمسة والجميلة!';
+  }
+
+  // Vehicles
+  if (lower.includes('سيار')) {
+    return 'هذه سيارة سريعة وجميلة! تسير على الطرقات بأمان وتنقلنا في نزهات ممتعة مع العائلة!';
+  }
+  if (lower.includes('حافل') || lower.includes('باص')) {
+    return 'هذه حافلة مدرسية كبيرة! تجمع الأصدقاء معاً كل صباح وتأخذهم إلى المدرسة بمرح!';
+  }
+  if (lower.includes('قطار')) {
+    return 'هذا قطار سريع وقوي! يسير على القضبان الحديدية ويطلق صوتاً ممتعاً: توت توت!';
+  }
+  if (lower.includes('طائر') || lower.includes('طيار')) {
+    return 'هذه طائرة عملاقة! تحلق عالياً في السماء فوق السحاب وتسافر بنا إلى بلاد بعيدة!';
+  }
+  if (lower.includes('سفين') || lower.includes('مركب') || lower.includes('قارب')) {
+    return 'هذه سفينة بحرية جميلة! تبحر في مياه البحر الزرقاء وتتحمل الأمواج بكل ثبات!';
+  }
+  if (lower.includes('صاروخ')) {
+    return 'هذا صاروخ فضائي خارق! ينطلق بسرعة مذهلة نحو النجوم والكواكب البعيدة في الفضاء!';
+  }
+
+  // Emotions & shapes
+  if (lower.includes('سعيد') || lower.includes('فرح')) {
+    return 'هذا وجه سعيد ومبتسم! الابتسامة تملأ قلوبنا بالفرح والبهجة وتجعل كل يوم مشرقاً!';
+  }
+  if (lower.includes('مندهش') || lower.includes('تعجب')) {
+    return 'هذا وجه مندهش ومتعجب! الفضول وحب الاستكشاف هما سر التعلم واكتشاف كل جديد!';
+  }
+  if (lower.includes('نجم')) {
+    return 'هذه نجمة ذهبية لامعة في السماء! وأنت النجم المتألق في كل مراحل لعبة الذاكرة!';
+  }
+  if (lower.includes('مثلث')) {
+    return 'هذا مثلث هندسي جميل! لديه ثلاثة أضلاع وثلاث زوايا متناسقة ومميزة!';
+  }
+  if (lower.includes('شمس')) {
+    return 'هذه الشمس الساطعة والدافئة! تشرق كل صباح لتنير العالم وتمنحنا الدفء والحياة!';
+  }
+
+  if (categoryTitle?.includes('حيوان')) {
+    return `هذا ${clean}! مخلوق رائع ومحبوب يعيش في الطبيعة وله صفات مميزة وجميلة!`;
+  }
+  if (categoryTitle?.includes('فواكه') || categoryTitle?.includes('طعام')) {
+    return `هذه ${clean}! طعام صحي ولذيذ يمد جسمك بالطاقة والنشاط والقوة!`;
+  }
+  if (categoryTitle?.includes('مواصل')) {
+    return `هذه ${clean}! وسيلة انتقال ممتازة تساعدنا على التنقل واستكشاف العالم بسرعة!`;
+  }
+
+  return `هذا ${clean}! بطاقة مميزة ورائعة اكتشفتها بتركيزك العالي وذكائك الكبير!`;
+}
+
 export async function generateItemRecognitionAudio(
   item: Pick<Item, 'name' | 'imageUrl'>,
   categoryTitle?: string
-): Promise<{ blob: Blob; spokenText: string }> {
-  const response = await fetch('/api/tts', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      itemName: item.name,
-      categoryTitle,
-    }),
-  });
+): Promise<{ blob: Blob | null; spokenText: string }> {
+  const smartText = getSmartItemDescription(item.name, categoryTitle);
 
-  const payload = (await response.json()) as {
-    audioBase64?: string;
-    mimeType?: string;
-    spokenText?: string;
-    error?: string;
-  };
+  try {
+    const response = await fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        itemName: item.name,
+        categoryTitle,
+      }),
+    });
 
-  if (!response.ok || !payload.audioBase64) {
-    throw new Error(payload.error || 'تعذر توليد الصوت التعريفي للصورة.');
+    if (response.ok) {
+      const payload = (await response.json()) as {
+        audioBase64?: string;
+        mimeType?: string;
+        spokenText?: string;
+      };
+
+      if (payload.audioBase64) {
+        const blob = base64ToBlob(
+          payload.audioBase64,
+          payload.mimeType || 'audio/wav'
+        );
+        return {
+          blob,
+          spokenText: payload.spokenText || smartText,
+        };
+      }
+    }
+  } catch {
+    // If backend is not available (e.g. static Cloudflare Pages / Vercel without Node)
   }
 
-  const blob = base64ToBlob(
-    payload.audioBase64,
-    payload.mimeType || 'audio/wav'
-  );
   return {
-    blob,
-    spokenText: payload.spokenText || `هذا ${item.name}!`,
+    blob: null,
+    spokenText: smartText,
   };
 }
 

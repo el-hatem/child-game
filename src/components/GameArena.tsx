@@ -437,23 +437,26 @@ export const GameArena: React.FC<GameArenaProps> = ({
         );
         if (runTokenRef.current !== token) return;
 
-        // Cache inside current roundCards & persist to IndexedDB
-        setRoundCards((prev) =>
-          prev.map((c) => (c.id === card.id ? { ...c, audioBlobOrUrl: blob } : c))
-        );
-        await onSaveItemAudio(card.id, blob);
+        if (blob) {
+          // Cache inside current roundCards & persist to IndexedDB
+          setRoundCards((prev) =>
+            prev.map((c) => (c.id === card.id ? { ...c, audioBlobOrUrl: blob } : c))
+          );
+          await onSaveItemAudio(card.id, blob);
+        }
 
         if (runTokenRef.current !== token) return;
         setDiscoveryBanner(spokenText);
-        await playBlobOrUrl(blob, mutedRef.current);
+        if (blob) {
+          await playBlobOrUrl(blob, mutedRef.current);
+        } else {
+          speakArabicText(spokenText, mutedRef.current);
+        }
       } catch (err) {
         if (runTokenRef.current !== token) return;
-        const msg =
-          err instanceof Error
-            ? err.message
-            : 'تعذر توليد الصوت الذكي.';
-        setDiscoveryBanner(`${card.name} (${msg})`);
-        speakArabicText(card.name, mutedRef.current);
+        const fallbackText = `هذا ${card.name}! رائع جداً، أحسنت!`;
+        setDiscoveryBanner(fallbackText);
+        speakArabicText(fallbackText, mutedRef.current);
       } finally {
         if (runTokenRef.current === token) {
           setGeneratingAudioId((curr) => (curr === card.id ? null : curr));

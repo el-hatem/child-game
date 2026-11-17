@@ -162,8 +162,13 @@ export const LiveVoiceModal: React.FC<LiveVoiceModalProps> = ({
       inputCtxRef.current = inputCtx;
       outputCtxRef.current = outputCtx;
 
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const ws = new WebSocket(`${protocol}//${window.location.host}/api/live`);
+      const customWs = import.meta.env.VITE_WS_URL as string | undefined;
+      const wsUrl = customWs
+        ? (customWs.startsWith('http')
+            ? customWs.replace(/^http/, 'ws')
+            : customWs) + (customWs.endsWith('/api/live') ? '' : '/api/live')
+        : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api/live`;
+      const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
       ws.onopen = () => {
@@ -239,7 +244,17 @@ export const LiveVoiceModal: React.FC<LiveVoiceModalProps> = ({
       };
 
       ws.onerror = () => {
-        setErrorMsg('تعذر الاتصال بالمحادثة الصوتية المباشرة.');
+        const isStaticHost =
+          window.location.hostname.includes('workers.dev') ||
+          window.location.hostname.includes('pages.dev') ||
+          window.location.hostname.includes('vercel.app');
+        if (isStaticHost && !customWs) {
+          setErrorMsg(
+            'استضافة المواقع الساكنة لا تدعم خادم WebSockets المباشر. تعمل المحادثة محلياً أو بربط خادم Node.js عبر VITE_WS_URL.'
+          );
+        } else {
+          setErrorMsg('تعذر الاتصال بالمحادثة الصوتية المباشرة.');
+        }
         setStatus('error');
       };
 
